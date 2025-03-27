@@ -1,18 +1,24 @@
 package com.smartstudyplanner.smart_study_planner_backend.model;
 
+import com.smartstudyplanner.smart_study_planner_backend.model.enums.Priority;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-@Data
 @Entity
 @Table(name = "subjects")
-@EntityListeners(AuditingEntityListener.class)
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Subject {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -23,19 +29,71 @@ public class Subject {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String priority;
+    private Priority priority;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime created_at;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updated_at;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Task> tasks = new ArrayList<>();
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        if (priority == null) {
+            priority = Priority.MEDIUM;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Add a task to this subject
+     * @param task The task to add
+     * @return the subject for method chaining
+     */
+    public Subject addTask(Task task) {
+        tasks.add(task);
+        task.setSubject(this);
+        return this;
+    }
+
+    /**
+     * Remove a task from this subject
+     * @param task The task to remove
+     * @return the subject for method chaining
+     */
+    public Subject removeTask(Task task) {
+        tasks.remove(task);
+        task.setSubject(null);
+        return this;
+    }
+
+    /**
+     * Calculate completion percentage for this subject
+     * @return percentage of completed tasks
+     */
+    public double getCompletionPercentage() {
+        if (tasks.isEmpty()) {
+            return 0.0;
+        }
+
+        long completedTasks = tasks.stream()
+                .filter(Task::isCompleted)
+                .count();
+
+        return (double) completedTasks / tasks.size() * 100.0;
+    }
 }
-

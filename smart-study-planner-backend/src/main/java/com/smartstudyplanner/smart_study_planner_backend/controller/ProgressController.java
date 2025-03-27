@@ -1,43 +1,85 @@
 package com.smartstudyplanner.smart_study_planner_backend.controller;
 
-import com.smartstudyplanner.smart_study_planner_backend.model.Progress;
+import com.smartstudyplanner.smart_study_planner_backend.dto.ProgressDto;
 import com.smartstudyplanner.smart_study_planner_backend.service.ProgressService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;
+
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Controller for progress tracking operations
+ */
 @RestController
 @RequestMapping("/api/progress")
 @RequiredArgsConstructor
 public class ProgressController {
+
     private final ProgressService progressService;
 
-    @PostMapping
-    public ResponseEntity<Progress> recordProgress(@RequestBody @Valid Progress progress) {
-        return ResponseEntity.ok(progressService.recordProgress(progress));
+    /**
+     * Get all progress entries for current user
+     */
+    @GetMapping
+    public ResponseEntity<List<ProgressDto>> getAllProgressEntries() {
+        return ResponseEntity.ok(progressService.getAllProgressEntries());
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Progress>> getUserProgress(
-            @PathVariable Integer userId,
+    /**
+     * Get progress entries by date range
+     */
+    @GetMapping("/by-date-range")
+    public ResponseEntity<List<ProgressDto>> getProgressByDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return ResponseEntity.ok(progressService.getUserProgress(userId, startDate, endDate));
+        return ResponseEntity.ok(progressService.getProgressByDateRange(startDate, endDate));
     }
 
-    @GetMapping("/user/{userId}/daily")
-    public ResponseEntity<Integer> getDailyStudyMinutes(
-            @PathVariable Integer userId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(progressService.getDailyStudyMinutes(userId, date));
+    /**
+     * Get progress entries for a specific task
+     */
+    @GetMapping("/by-task/{taskId}")
+    public ResponseEntity<List<ProgressDto>> getProgressByTask(@PathVariable Integer taskId) {
+        return ResponseEntity.ok(progressService.getProgressByTask(taskId));
     }
 
-    @GetMapping("/task/{taskId}")
-    public ResponseEntity<List<Progress>> getTaskProgress(@PathVariable Integer taskId) {
-        return ResponseEntity.ok(progressService.getTaskProgress(taskId));
+    /**
+     * Get a specific progress entry
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ProgressDto> getProgressById(@PathVariable Integer id) {
+        return ResponseEntity.ok(progressService.getProgressById(id));
+    }
+
+    /**
+     * Create a new progress entry
+     */
+    @PostMapping
+    public ResponseEntity<ProgressDto> createProgress(@Valid @RequestBody ProgressDto progressDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(progressService.createProgress(progressDto));
+    }
+
+    /**
+     * Update an existing progress entry
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ProgressDto> updateProgress(
+            @PathVariable Integer id,
+            @Valid @RequestBody ProgressDto progressDto) {
+        return ResponseEntity.ok(progressService.updateProgress(id, progressDto));
+    }
+
+    /**
+     * Delete a progress entry
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProgress(@PathVariable Integer id) {
+        progressService.deleteProgress(id);
+        return ResponseEntity.noContent().build();
     }
 }

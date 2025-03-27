@@ -1,18 +1,22 @@
 package com.smartstudyplanner.smart_study_planner_backend.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
 @Table(name = "progress")
-@EntityListeners(AuditingEntityListener.class)
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Progress {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -20,8 +24,8 @@ public class Progress {
     @Column(nullable = false)
     private LocalDate date;
 
-    @Column(nullable = false)
-    private Integer minutes_spent;
+    @Column(name = "minutes_spent", nullable = false)
+    private int minutesSpent;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
@@ -34,8 +38,15 @@ public class Progress {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime created_at;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        if (date == null) {
+            date = LocalDate.now();
+        }
+    }
 }
 

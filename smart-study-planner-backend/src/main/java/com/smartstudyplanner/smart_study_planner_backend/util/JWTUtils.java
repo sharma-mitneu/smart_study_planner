@@ -1,95 +1,117 @@
 package com.smartstudyplanner.smart_study_planner_backend.util;
 
+import com.smartstudyplanner.smart_study_planner_backend.model.User;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
- * Utility methods for JWT token handling
+ * Utility class for JWT token operations
  */
+@Component
 public class JWTUtils {
 
-    // JWT secret key (in production, this should be kept in secure configuration)
-    private static final Key JWT_KEY = Keys.hmacShaKeyFor("thisIsASecretKeyForJwtThatShouldBeInASecureConfigInProduction".getBytes());
+    @Value("${jwt.secret}")
+    private String secret;
+
+    @Value("${jwt.expiration}")
+    private Long expiration;
 
     /**
-     * Extract JWT token from Authorization header
-     *
-     * @param request HTTP request
-     * @return Token string or null if not found/invalid
+     * Extract username from token
      */
-    public static String extractTokenFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
     }
 
     /**
-     * Extract user ID from JWT token
-     *
-     * @param token JWT token
-     * @return User ID or null if token is invalid
+     * Extract expiration date from token
      */
-    public static Long getUserIdFromToken(String token) {
-        try {
-            Jws<Claims> claimsJws = Jwts.parserBuilder()
-                    .setSigningKey(JWT_KEY)
-                    .build()
-                    .parseClaimsJws(token);
-
-            Claims body = claimsJws.getBody();
-            return body.get("userId", Long.class);
-        } catch (JwtException e) {
-            return null;
-        }
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
     }
 
     /**
-     * Extract username from JWT token
-     *
-     * @param token JWT token
-     * @return Username or null if token is invalid
+     * Extract a specific claim from token
      */
-    public static String getUsernameFromToken(String token) {
-        try {
-            Jws<Claims> claimsJws = Jwts.parserBuilder()
-                    .setSigningKey(JWT_KEY)
-                    .build()
-                    .parseClaimsJws(token);
-
-            Claims body = claimsJws.getBody();
-            return body.getSubject();
-        } catch (JwtException e) {
-            return null;
-        }
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
     }
 
     /**
-     * Check if token is valid and not expired
-     *
-     * @param token JWT token
-     * @return true if token is valid
+     * Extract all claims from token
      */
-    public static boolean validateToken(String token) {
-        try {
-            Jws<Claims> claimsJws = Jwts.parserBuilder()
-                    .setSigningKey(JWT_KEY)
-                    .build()
-                    .parseClaimsJws(token);
-
-            Date expiration = claimsJws.getBody().getExpiration();
-            return !expiration.before(new Date());
-        } catch (JwtException e) {
-            return false;
-        }
+    private Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey()) // Use the key derived from the secret
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
+
+    /**
+     * Check if token is expired
+     */
+    private Boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    /**
+     * Generate token for user
+     */
+    public String generateToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+
+        // Add custom claims if needed
+        if (userDetails instanceof User) {
+            User user = (User) userDetails;
+            claims.put("userId", user.getId());
+            claims.put("email", user.getEmail());
+            claims.put("role", user.getRole().name());
+        }
+
+        return createToken(claims, userDetails.getUsername());
+    }
+
+    /**
+     * Create token with claims and subject
+     */
+    private String createToken(Map<String, Object> claims, String subject) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256) // Use the key derived from the secret
+                .compact();
+    }
+
+    /**
+     * Validate token for user
+     */
+    public Boolean validateToken(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    /**
+     * Get signing key from secret
+     */
+    private Key getSigningKey() {
+        // Use the secret key from application.properties for signing
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
 }
-

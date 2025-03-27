@@ -4,16 +4,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Exception thrown for validation failures
+ * General application exception
  */
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class ValidationException extends RuntimeException {
+public class StudyPlannerException extends RuntimeException {
 
-    public ValidationException(String message) {
+    public StudyPlannerException(String message) {
         super(message);
     }
 
-    public ValidationException(String message, Throwable cause) {
+    public StudyPlannerException(String message, Throwable cause) {
         super(message, cause);
     }
 }
