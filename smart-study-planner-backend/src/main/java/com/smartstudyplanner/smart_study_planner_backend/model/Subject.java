@@ -1,8 +1,5 @@
 package com.smartstudyplanner.smart_study_planner_backend.model;
 
-import com.smartstudyplanner.smart_study_planner_backend.model.Role;
-import com.smartstudyplanner.smart_study_planner_backend.util.Exportable;
-import org.mindrot.jbcrypt.BCrypt;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
@@ -13,24 +10,25 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "users")
+@Table(name = "subjects")
 @EntityListeners(AuditingEntityListener.class)
-public class User {
+public class Subject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, unique = true)
-    private String username;
+    @Column(nullable = false)
+    private String name;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Column(nullable = false)
-    private String password;
+    private String priority;
 
-    @Column(nullable = false, unique = true)
-    private String email;
-
-    @Column(nullable = false)
-    private String role;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -40,3 +38,4 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updated_at;
 }
+

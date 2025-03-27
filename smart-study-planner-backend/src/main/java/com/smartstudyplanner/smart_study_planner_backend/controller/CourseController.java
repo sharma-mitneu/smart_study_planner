@@ -2,6 +2,7 @@ package com.smartstudyplanner.smart_study_planner_backend.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartstudyplanner.smart_study_planner_backend.model.ApiResponse;
 import com.smartstudyplanner.smart_study_planner_backend.model.Course;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,11 +17,14 @@ import java.util.List;
 public class CourseController {
 
     @GetMapping
-    public List<Course> getCourses() throws IOException {
+    public ApiResponse<List<Course>> getCourses() throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(
+        List<Course> courses = objectMapper.readValue(
                 new ClassPathResource("data/courses.json").getInputStream(),
                 new TypeReference<List<Course>>() {}
         );
+
+        return new ApiResponse<>("success", "Courses fetched successfully", courses);
     }
+
 }
