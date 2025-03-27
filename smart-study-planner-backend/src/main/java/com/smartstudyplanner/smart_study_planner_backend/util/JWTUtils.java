@@ -1,19 +1,18 @@
 package com.smartstudyplanner.smart_study_planner_backend.util;
 
 import com.smartstudyplanner.smart_study_planner_backend.model.User;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -22,6 +21,7 @@ import java.util.function.Function;
 @Component
 public class JWTUtils {
 
+    private static final Logger log = LoggerFactory.getLogger(JWTUtils.class);
     @Value("${jwt.secret}")
     private String secret;
 
@@ -54,16 +54,33 @@ public class JWTUtils {
      * Extract all claims from token
      */
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey()) // Use the key derived from the secret
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        log.info("Received token: " + token);
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            log.info("Claims extracted successfully: " + claims);
+            return claims;
+        } catch (ExpiredJwtException e) {
+            log.error("Expired JWT token", e);
+            throw new RuntimeException("Token has expired");
+        } catch (UnsupportedJwtException e) {
+            log.error("Unsupported JWT token", e);
+            throw new RuntimeException("Token is unsupported");
+        } catch (MalformedJwtException e) {
+            log.error("Malformed JWT token", e);
+            throw new RuntimeException("Malformed token");
+        } catch (JwtException | IllegalArgumentException e) {
+            log.error("Invalid JWT token", e);
+            throw new RuntimeException("Invalid token");
+        }
     }
 
-    /**
-     * Check if token is expired
-     */
+        /**
+         * Check if token is expired
+         */
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
@@ -93,8 +110,8 @@ public class JWTUtils {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256) // Use the key derived from the secret
+                .setExpiration(new Date(System.currentTimeMillis() + expiration * 3600000))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -110,8 +127,10 @@ public class JWTUtils {
      * Get signing key from secret
      */
     private Key getSigningKey() {
-        // Use the secret key from application.properties for signing
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        String secret = "ZmYyYTQ0ZDU3YzJlNGM2YmY2ZmFkZmMzZWIyMjk0Mjc=";
+        byte[] keyBytes = Base64.getDecoder().decode(secret);
+        log.info("Decoded key bytes: " + Arrays.toString(keyBytes));
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
 }

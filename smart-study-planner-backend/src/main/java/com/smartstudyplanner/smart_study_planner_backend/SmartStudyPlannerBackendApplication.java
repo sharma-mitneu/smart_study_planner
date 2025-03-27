@@ -6,7 +6,8 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@EnableJpaRepositories("com.smartstudyplanner.smart_study_planner_backend.repository")
+@EnableJpaRepositories(basePackages = "com.smartstudyplanner.smart_study_planner_backend.repository")
+@EntityScan(basePackages = "com.smartstudyplanner.smart_study_planner_backend.model")
 public class SmartStudyPlannerBackendApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(SmartStudyPlannerBackendApplication.class, args);

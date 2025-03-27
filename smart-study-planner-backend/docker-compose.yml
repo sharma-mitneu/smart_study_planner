@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_container
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword   # Set your MySQL root password
+      MYSQL_DATABASE: your_database_name  # Set the name of the database you want to create
+      MYSQL_USER: your_db_user            # Set a MySQL user
+      MYSQL_PASSWORD: your_db_password    # Set a password for the MySQL user
+    ports:
+      - "3306:3306"                       # Expose MySQL port to your localhost (3306)
+    networks:
+      - backend
+    volumes:
+      - mysql_data:/var/lib/mysql         # Persist data even after container stops
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
