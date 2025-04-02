@@ -1,5 +1,5 @@
+// CorsConfig.java
 package com.smartstudyplanner.smart_study_planner_backend.config;
-
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

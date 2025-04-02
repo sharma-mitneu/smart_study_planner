@@ -3,6 +3,7 @@ package com.smartstudyplanner.smart_study_planner_backend.service;
 import com.smartstudyplanner.smart_study_planner_backend.dto.TaskDto;
 import com.smartstudyplanner.smart_study_planner_backend.exception.ResourceNotFoundException;
 import com.smartstudyplanner.smart_study_planner_backend.exception.StudyPlannerException;
+import com.smartstudyplanner.smart_study_planner_backend.model.Progress;
 import com.smartstudyplanner.smart_study_planner_backend.model.Subject;
 import com.smartstudyplanner.smart_study_planner_backend.model.Task;
 import com.smartstudyplanner.smart_study_planner_backend.model.User;
@@ -280,9 +281,16 @@ public class TaskService {
         boolean isOverdue = !task.isCompleted() && LocalDateTime.now().isAfter(task.getDueDate());
 
         // Calculate total minutes spent
-        Integer totalMinutesSpent = task.getProgressEntries().stream()
-                .mapToInt(p -> p.getMinutesSpent())
-                .sum();
+
+        // Calculate total minutes spent (handle null case)
+        Integer totalMinutesSpent = task.getProgressEntries() != null
+                ? task.getProgressEntries().stream().mapToInt(Progress::getMinutesSpent).sum()
+                : 0;
+
+
+//        Integer totalMinutesSpent = task.getProgressEntries().stream()
+//                .mapToInt(p -> p.getMinutesSpent())
+//                .sum();
 
         return TaskDto.builder()
                 .id(task.getId())
