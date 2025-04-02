@@ -7,6 +7,7 @@ import com.smartstudyplanner.smart_study_planner_backend.model.Progress;
 import com.smartstudyplanner.smart_study_planner_backend.model.Subject;
 import com.smartstudyplanner.smart_study_planner_backend.model.Task;
 import com.smartstudyplanner.smart_study_planner_backend.model.User;
+import com.smartstudyplanner.smart_study_planner_backend.repository.SubjectEnrollmentRepository;
 import com.smartstudyplanner.smart_study_planner_backend.repository.SubjectRepository;
 import com.smartstudyplanner.smart_study_planner_backend.repository.TaskRepository;
 import com.smartstudyplanner.smart_study_planner_backend.util.TaskComparatorFactory;
@@ -26,6 +27,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final SubjectRepository subjectRepository;
     private final AuthService authService;
+    private final SubjectEnrollmentRepository subjectEnrollmentRepository;
     private final TaskComparatorFactory taskComparatorFactory;
 
     /**
@@ -125,48 +127,45 @@ public class TaskService {
     }
 
     /**
+     * Check if student is enrolled in a subject
+     */
+    private boolean isStudentEnrolledInSubject(Integer studentId, Integer subjectId) {
+        return subjectEnrollmentRepository
+                .existsByStudentIdAndSubjectId(studentId, subjectId);
+    }
+
+    /**
      * Create a new task
      */
     @Transactional
     public TaskDto createTask(TaskDto taskDto) {
         User currentUser = authService.getCurrentUser();
 
-        // Verify subject exists and belongs to user
+        // Verify subject exists
         Subject subject = subjectRepository.findById(taskDto.getSubjectId())
-                .orElseThrow(() -> new ResourceNotFoundException("Subject not found with id: " + taskDto.getSubjectId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Subject not found"));
 
-        if (!subject.getUser().getId().equals(currentUser.getId())) {
-            throw new ResourceNotFoundException("Subject not found with id: " + taskDto.getSubjectId());
+        // Check student enrollment
+        if (!isStudentEnrolledInSubject(currentUser.getId(), subject.getId())) {
+            throw new StudyPlannerException("You must be enrolled in the subject to create tasks");
         }
 
-        // Validate recurrence data
-        if (taskDto.isRecurring()) {
-            if (taskDto.getRecurrenceFrequency() == null) {
-                throw new StudyPlannerException("Recurrence frequency is required for recurring tasks");
-            }
-            if (taskDto.getRecurrenceEndDate() == null) {
-                throw new StudyPlannerException("Recurrence end date is required for recurring tasks");
-            }
-            if (taskDto.getRecurrenceEndDate().isBefore(taskDto.getDueDate())) {
-                throw new StudyPlannerException("Recurrence end date must be after due date");
-            }
+        // Validate task priority (mandatory for students)
+        if (taskDto.getPriority() == null) {
+            throw new StudyPlannerException("Task priority is required");
         }
 
         Task task = Task.builder()
                 .title(taskDto.getTitle())
                 .description(taskDto.getDescription())
                 .dueDate(taskDto.getDueDate())
-                .completed(false) // Always start as not completed
                 .priority(taskDto.getPriority())
                 .subject(subject)
                 .user(currentUser)
-                .recurring(taskDto.isRecurring())
-                .recurrenceFrequency(taskDto.getRecurrenceFrequency())
-                .recurrenceEndDate(taskDto.getRecurrenceEndDate())
+                .completed(false)
                 .build();
 
         Task savedTask = taskRepository.save(task);
-
         return mapTaskToDto(savedTask);
     }
 

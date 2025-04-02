@@ -54,7 +54,7 @@ public class CSVExportService {
                         subject.getId(),
                         subject.getName(),
                         subject.getDescription(),
-                        subject.getPriority().name(),
+                        //subject.getPriority().name(),
                         formatDateTime(subject.getCreatedAt()),
                         formatDateTime(subject.getUpdatedAt())
                 );

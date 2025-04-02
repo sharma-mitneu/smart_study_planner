@@ -1,7 +1,6 @@
 package com.smartstudyplanner.smart_study_planner_backend.dto;
 
-import com.smartstudyplanner.smart_study_planner_backend.model.enums.Priority;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,15 +22,9 @@ public class SubjectDTO {
     @Builder.Default
     private String description = "";
 
-    @NotNull(message = "Priority is required")
-    private Priority priority;
-
-    // Ensuring positive or zero value
-    @PositiveOrZero(message = "Completion percentage must be zero or positive")
     @Builder.Default
     private BigDecimal completionPercentage = BigDecimal.ZERO;
 
-    @PositiveOrZero(message = "Task count must be zero or positive")
     @Builder.Default
     private Integer taskCount = 0;
 }

@@ -1,6 +1,5 @@
 package com.smartstudyplanner.smart_study_planner_backend.model;
 
-import com.smartstudyplanner.smart_study_planner_backend.model.enums.Priority;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,10 +28,6 @@ public class Subject {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Priority priority;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -49,9 +44,6 @@ public class Subject {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (priority == null) {
-            priority = Priority.MEDIUM;
-        }
     }
 
     @PreUpdate

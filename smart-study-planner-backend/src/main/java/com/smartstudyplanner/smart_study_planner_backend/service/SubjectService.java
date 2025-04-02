@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,6 @@ public class SubjectService {
     /**
      * Get all subjects for current user
      */
-    @Transactional(readOnly = true)
     public List<SubjectDTO> getAllSubjects() {
         User currentUser = authService.getCurrentUser();
 
@@ -51,27 +51,35 @@ public class SubjectService {
         // For admin, return all subjects they created
         List<Subject> subjects = subjectRepository.findByUser(currentUser);
 
+        // Get tasks for the current user
+        List<Task> userTasks = taskRepository.findByUserId(currentUser.getId());
+
+        // Group tasks by subject
+        Map<Integer, List<Task>> tasksBySubject = userTasks.stream()
+                .collect(Collectors.groupingBy(
+                        task -> task.getSubject().getId(),
+                        Collectors.toList()
+                ));
+
         // Get task counts for each subject
-        Map<Integer, Long> taskCountMap = taskRepository.findByUserId(currentUser.getId()).stream()
+        Map<Integer, Long> taskCountMap = userTasks.stream()
                 .collect(Collectors.groupingBy(
                         task -> task.getSubject().getId(),
                         Collectors.counting()
                 ));
 
         // Get completion percentages
-        Map<Integer, Double> completionRateMap = taskRepository.findByUserId(currentUser.getId()).stream()
-                .collect(Collectors.groupingBy(
-                        task -> task.getSubject().getId(),
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                tasks -> calculateCompletionPercentage(tasks)
-                        )
+        Map<Integer, BigDecimal> completionRateMap = tasksBySubject.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> entry.getKey(),
+                        entry -> calculateCompletionPercentage(entry.getValue())
                 ));
 
         return subjects.stream()
                 .map(subject -> mapToDTO(subject, taskCountMap, completionRateMap))
                 .collect(Collectors.toList());
     }
+
 
     /**
      * Get subject by ID
@@ -113,7 +121,7 @@ public class SubjectService {
         Subject subject = Subject.builder()
                 .name(subjectDto.getName())
                 .description(subjectDto.getDescription())
-                .priority(subjectDto.getPriority() != null ? subjectDto.getPriority() : Priority.MEDIUM)
+                //.priority(subjectDto.getPriority() != null ? subjectDto.getPriority() : Priority.MEDIUM)
                 .user(currentUser)
                 .build();
 
@@ -138,7 +146,7 @@ public class SubjectService {
 
         subject.setName(subjectDto.getName());
         subject.setDescription(subjectDto.getDescription());
-        subject.setPriority(subjectDto.getPriority());
+        //subject.setPriority(subjectDto.getPriority());
 
         Subject updatedSubject = subjectRepository.save(subject);
         return mapToDTO(updatedSubject);
@@ -171,16 +179,18 @@ public class SubjectService {
     @Transactional
     public SubjectEnrollmentDTO enrollStudent(Integer subjectId) {
         User currentUser = authService.getCurrentUser();
+
+        // Ensure only students can enroll
         if (currentUser.getRole() != UserRole.STUDENT) {
             throw new StudyPlannerException("Only students can enroll in subjects");
         }
 
         Subject subject = subjectRepository.findById(subjectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Subject not found with id: " + subjectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Subject not found"));
 
         // Check if already enrolled
         if (isStudentEnrolled(currentUser.getId(), subjectId)) {
-            throw new StudyPlannerException("Student is already enrolled in this subject");
+            throw new StudyPlannerException("Already enrolled in this subject");
         }
 
         SubjectEnrollment enrollment = SubjectEnrollment.builder()
@@ -190,9 +200,9 @@ public class SubjectService {
                 .status("ACTIVE")
                 .build();
 
-        SubjectEnrollment savedEnrollment = subjectEnrollmentRepository.save(enrollment);
+        subjectEnrollmentRepository.save(enrollment);
 
-        return mapToEnrollmentDTO(savedEnrollment);
+        return mapToEnrollmentDTO(enrollment);
     }
 
     /**
@@ -239,36 +249,52 @@ public class SubjectService {
         return subjectEnrollmentRepository.existsByStudentIdAndSubjectId(studentId, subjectId);
     }
 
-    private double calculateCompletionPercentage(List<Task> tasks) {
+    /**
+     * Calculate completion percentage for tasks
+     */
+    private BigDecimal calculateCompletionPercentage(List<Task> tasks) {
         if (tasks.isEmpty()) {
-            return 0.0;
+            return BigDecimal.ZERO;
         }
-        long completedCount = tasks.stream()
+        long completedTasks = tasks.stream()
                 .filter(Task::isCompleted)
                 .count();
-        return (double) completedCount / tasks.size() * 100.0;
+        return BigDecimal.valueOf((completedTasks * 100.0) / tasks.size())
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
+    /**
+     * Map Subject to SubjectDTO with task count and completion percentage
+     */
     private SubjectDTO mapToDTO(Subject subject) {
-        List<Task> tasks = taskRepository.findBySubjectId(subject.getId());
+        // Get task count and calculate completion percentage
+        List<com.smartstudyplanner.smart_study_planner_backend.model.Task> tasks =
+                taskRepository.findBySubjectId(subject.getId());
+
         return SubjectDTO.builder()
                 .id(subject.getId())
                 .name(subject.getName())
                 .description(subject.getDescription())
-                .priority(subject.getPriority())
                 .taskCount(tasks.size())
-                .completionPercentage(BigDecimal.valueOf(calculateCompletionPercentage(tasks)))
+                .completionPercentage(calculateCompletionPercentage(tasks))
                 .build();
     }
 
-    private SubjectDTO mapToDTO(Subject subject, Map<Integer, Long> taskCountMap, Map<Integer, Double> completionRateMap) {
+    /**
+     * Updated mapToDTO method to accept BigDecimal completion rate
+     */
+    private SubjectDTO mapToDTO(Subject subject,
+                                Map<Integer, Long> taskCountMap,
+                                Map<Integer, BigDecimal> completionRateMap) {
         return SubjectDTO.builder()
                 .id(subject.getId())
                 .name(subject.getName())
                 .description(subject.getDescription())
-                .priority(subject.getPriority())
                 .taskCount(taskCountMap.getOrDefault(subject.getId(), 0L).intValue())
-                .completionPercentage(BigDecimal.valueOf(completionRateMap.getOrDefault(subject.getId(), 0.0)))
+                .completionPercentage(completionRateMap.getOrDefault(
+                        subject.getId(),
+                        BigDecimal.ZERO
+                ))
                 .build();
     }
 

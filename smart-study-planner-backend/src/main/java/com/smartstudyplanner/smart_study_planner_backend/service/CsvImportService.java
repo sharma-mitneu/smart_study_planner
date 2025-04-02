@@ -59,7 +59,7 @@ public class CsvImportService {
                     SubjectDTO subjectDto = SubjectDTO.builder()
                             .name(record.get("Name"))
                             .description(record.get("Description"))
-                            .priority(getPriority(record.get("Priority")))
+                            //.priority(getPriority(record.get("Priority")))
                             .build();
 
                     SubjectDTO savedSubject = subjectService.createSubject(subjectDto);

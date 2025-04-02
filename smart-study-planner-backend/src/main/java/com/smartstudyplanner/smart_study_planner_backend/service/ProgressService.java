@@ -3,6 +3,7 @@ package com.smartstudyplanner.smart_study_planner_backend.service;
 
 import com.smartstudyplanner.smart_study_planner_backend.dto.ProgressDto;
 import com.smartstudyplanner.smart_study_planner_backend.exception.ResourceNotFoundException;
+import com.smartstudyplanner.smart_study_planner_backend.exception.StudyPlannerException;
 import com.smartstudyplanner.smart_study_planner_backend.model.Progress;
 import com.smartstudyplanner.smart_study_planner_backend.model.Task;
 import com.smartstudyplanner.smart_study_planner_backend.model.User;
@@ -175,6 +176,82 @@ public class ProgressService {
         return progressEntries.stream()
                 .map(this::mapProgressToDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Log progress for a task
+     */
+    @Transactional
+    public ProgressDto logProgress(ProgressDto progressDto) {
+        User currentUser = authService.getCurrentUser();
+
+        // Verify task exists and belongs to user
+        Task task = taskRepository.findById(progressDto.getTaskId())
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+
+        // Ensure user can only log progress for their own tasks
+        if (!task.getUser().getId().equals(currentUser.getId())) {
+            throw new StudyPlannerException("You can only log progress for your own tasks");
+        }
+
+        // Validate progress details
+        validateProgressDetails(progressDto);
+
+        Progress progress = Progress.builder()
+                .task(task)
+                .user(currentUser)
+                .date(progressDto.getDate() != null ? progressDto.getDate() : LocalDate.now())
+                .minutesSpent(progressDto.getMinutesSpent())
+                .notes(progressDto.getNotes())
+                .build();
+
+        Progress savedProgress = progressRepository.save(progress);
+
+        // Optional: Update task completion status based on progress
+        updateTaskCompletionStatus(task);
+
+        return mapProgressToDto(savedProgress);
+    }
+
+    /**
+     * Validate progress logging details
+     */
+    private void validateProgressDetails(ProgressDto progressDto) {
+        if (progressDto.getMinutesSpent() <= 0) {
+            throw new StudyPlannerException("Minutes spent must be positive");
+        }
+
+        if (progressDto.getDate() != null && progressDto.getDate().isAfter(LocalDate.now())) {
+            throw new StudyPlannerException("Progress date cannot be in the future");
+        }
+    }
+
+    /**
+     * Update task completion status based on overall progress
+     */
+    private void updateTaskCompletionStatus(Task task) {
+        // Calculate total progress time
+        int totalProgressTime = task.getProgressEntries().stream()
+                .mapToInt(Progress::getMinutesSpent)
+                .sum();
+
+        // Simple completion logic - adjust as needed
+        if (totalProgressTime >= estimateRequiredTime(task)) {
+            task.setCompleted(true);
+            taskRepository.save(task);
+        }
+    }
+
+    /**
+     * Estimate required time for task completion
+     */
+    private int estimateRequiredTime(Task task) {
+        switch (task.getPriority()) {
+            case HIGH: return 180; // 3 hours
+            case MEDIUM: return 120; // 2 hours
+            case LOW: return 60; // 1 hour
+            default: return 90;
+        }
     }
 
     /**

@@ -25,7 +25,7 @@ public interface SubjectRepository extends JpaRepository<Subject, Integer> {
     /**
      * Find subjects by user and priority
      */
-    List<Subject> findByUserAndPriority(User user, Priority priority);
+    //List<Subject> findByUserAndPriority(User user, Priority priority);
 
     /**
      * Find subjects with completion status
