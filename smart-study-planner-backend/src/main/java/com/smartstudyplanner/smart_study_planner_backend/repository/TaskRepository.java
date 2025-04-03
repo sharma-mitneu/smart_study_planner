@@ -20,6 +20,15 @@ public interface TaskRepository extends JpaRepository<Task, Integer> {
     List<Task> findByUser(User user);
 
     /**
+     * Find incomplete tasks for a specific subject and user
+     */
+    List<Task> findBySubjectIdAndUserIdAndCompleted(
+            Integer subjectId,
+            Integer userId,
+            boolean completed
+    );
+
+    /**
      * Find all tasks for a user ID
      */
     List<Task> findByUserId(Integer userId);

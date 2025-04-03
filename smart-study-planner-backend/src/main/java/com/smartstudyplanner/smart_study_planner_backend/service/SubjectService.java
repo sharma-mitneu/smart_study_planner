@@ -25,6 +25,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -111,17 +112,23 @@ public class SubjectService {
     @Transactional
     public SubjectDTO createSubject(SubjectDTO subjectDto) {
         User currentUser = authService.getCurrentUser();
-        validateAdminAccess();
 
+        // Validate admin access
         if (currentUser.getRole() != UserRole.ADMIN) {
-            log.info("Current user role: {}", currentUser.getRole().toString());
             throw new StudyPlannerException("Only administrators can create subjects");
+        }
+
+        // Check if a subject with the same course ID already exists
+        Optional<Subject> existingSubject = subjectRepository.findByCourseId(subjectDto.getCourseId());
+        if (existingSubject.isPresent()) {
+            throw new StudyPlannerException("A subject with this course ID already exists");
         }
 
         Subject subject = Subject.builder()
                 .name(subjectDto.getName())
                 .description(subjectDto.getDescription())
-                //.priority(subjectDto.getPriority() != null ? subjectDto.getPriority() : Priority.MEDIUM)
+                .courseId(subjectDto.getCourseId())
+                .professor(subjectDto.getProfessor())
                 .user(currentUser)
                 .build();
 
@@ -218,6 +225,21 @@ public class SubjectService {
         SubjectEnrollment enrollment = subjectEnrollmentRepository
                 .findByStudentIdAndSubjectId(currentUser.getId(), subjectId)
                 .orElseThrow(() -> new StudyPlannerException("Student is not enrolled in this subject"));
+
+        // Check for incomplete tasks in the subject
+        List<Task> incompleteTasks = taskRepository.findBySubjectIdAndUserIdAndCompleted(
+                subjectId,
+                currentUser.getId(),
+                false
+        );
+
+        // If there are incomplete tasks, prevent un-enrollment
+        if (!incompleteTasks.isEmpty()) {
+            throw new StudyPlannerException(
+                    "Cannot un-enroll. You have " + incompleteTasks.size() +
+                            " incomplete task(s) in this subject. Please complete them first."
+            );
+        }
 
         subjectEnrollmentRepository.delete(enrollment);
     }

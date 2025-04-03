@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SubjectDTO {
-
     private Integer id;
 
     @NotBlank(message = "Subject name is required")
@@ -21,6 +20,12 @@ public class SubjectDTO {
 
     @Builder.Default
     private String description = "";
+
+    @NotBlank(message = "Course ID is required")
+    private String courseId; // New field for unique course identification
+
+    @NotBlank(message = "Professor name is required")
+    private String professor; // New field for professor
 
     @Builder.Default
     private BigDecimal completionPercentage = BigDecimal.ZERO;

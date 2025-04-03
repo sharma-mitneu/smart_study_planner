@@ -17,7 +17,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Subject {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -27,6 +26,12 @@ public class Subject {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "course_id", nullable = false, unique = true)
+    private String courseId;
+
+    @Column(nullable = false)
+    private String professor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

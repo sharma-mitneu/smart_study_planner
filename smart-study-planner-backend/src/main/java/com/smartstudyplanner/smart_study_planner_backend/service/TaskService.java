@@ -7,6 +7,7 @@ import com.smartstudyplanner.smart_study_planner_backend.model.Progress;
 import com.smartstudyplanner.smart_study_planner_backend.model.Subject;
 import com.smartstudyplanner.smart_study_planner_backend.model.Task;
 import com.smartstudyplanner.smart_study_planner_backend.model.User;
+import com.smartstudyplanner.smart_study_planner_backend.model.enums.UserRole;
 import com.smartstudyplanner.smart_study_planner_backend.repository.SubjectEnrollmentRepository;
 import com.smartstudyplanner.smart_study_planner_backend.repository.SubjectRepository;
 import com.smartstudyplanner.smart_study_planner_backend.repository.TaskRepository;
@@ -140,6 +141,11 @@ public class TaskService {
     @Transactional
     public TaskDto createTask(TaskDto taskDto) {
         User currentUser = authService.getCurrentUser();
+
+        if (currentUser.getRole() != UserRole.STUDENT) {
+            throw new StudyPlannerException("Only students can create tasks");
+        }
+
 
         // Verify subject exists
         Subject subject = subjectRepository.findById(taskDto.getSubjectId())
