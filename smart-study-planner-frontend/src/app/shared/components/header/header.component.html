@@ -1,0 +1,14 @@
+<header class="app-header">
+  <div class="logo-container">
+    <img src="assets/icons/logo.svg" alt="Smart Study Planner Logo" class="logo">
+    <h1>Smart Study Planner</h1>
+  </div>
+  
+  <div class="user-info" *ngIf="authService.isLoggedIn()">
+    <span class="username">{{ authService.getCurrentUser().username }}</span>
+    <span class="role-badge" [class.admin]="authService.isAdmin()" [class.student]="authService.isStudent()">
+      {{ authService.getCurrentUser().role }}
+    </span>
+    <button class="logout-btn" (click)="logout()">Logout</button>
+  </div>
+</header>

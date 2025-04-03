@@ -1,0 +1,45 @@
+<nav class="sidebar">
+  <ul class="nav-links">
+    <li>
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <i class="fa fa-dashboard"></i> Dashboard
+      </a>
+    </li>
+    
+    <li>
+      <a routerLink="/subjects" routerLinkActive="active">
+        <i class="fa fa-book"></i> Subjects
+      </a>
+    </li>
+    
+    <li>
+      <a routerLink="/tasks" routerLinkActive="active">
+        <i class="fa fa-tasks"></i> Tasks
+      </a>
+    </li>
+    
+    <li>
+      <a routerLink="/progress" routerLinkActive="active">
+        <i class="fa fa-line-chart"></i> Progress
+      </a>
+    </li>
+    
+    <li>
+      <a routerLink="/scheduler" routerLinkActive="active">
+        <i class="fa fa-calendar"></i> Scheduler
+      </a>
+    </li>
+    
+    <li>
+      <a routerLink="/analytics" routerLinkActive="active">
+        <i class="fa fa-bar-chart"></i> Analytics
+      </a>
+    </li>
+    
+    <li *ngIf="authService.isAdmin()">
+      <a routerLink="/admin" routerLinkActive="active">
+        <i class="fa fa-cog"></i> Admin
+      </a>
+    </li>
+  </ul>
+</nav>

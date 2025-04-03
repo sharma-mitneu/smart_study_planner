@@ -1,0 +1,24 @@
+<!-- src/app/features/analytics/study-time-chart/study-time-chart.component.html -->
+<div class="chart-container" (window:resize)="onResize($event)">
+    <div *ngIf="chartData.length === 0" class="empty-chart">
+      <p>No study time data available</p>
+    </div>
+    
+    <ngx-charts-line-chart
+      *ngIf="chartData.length > 0"
+      [view]="view"
+      [scheme]="colorScheme"
+      [results]="singleSeries"
+      [gradient]="gradient"
+      [xAxis]="showXAxis"
+      [yAxis]="showYAxis"
+      [legend]="showLegend"
+      [showXAxisLabel]="showXAxisLabel"
+      [showYAxisLabel]="showYAxisLabel"
+      [xAxisLabel]="xAxisLabel"
+      [yAxisLabel]="yAxisLabel"
+      [timeline]="timeline"
+      [autoScale]="true"
+      [curve]="'catmullRom'">
+    </ngx-charts-line-chart>
+  </div>

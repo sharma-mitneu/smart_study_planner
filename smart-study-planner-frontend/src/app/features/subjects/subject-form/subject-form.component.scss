@@ -1,0 +1,51 @@
+/* src/app/features/subjects/subject-form/subject-form.component.scss */
+.subject-form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding-bottom: 24px;
+  }
+  
+  .subject-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 500;
+    }
+  }
+  
+  .loading-spinner {
+    display: flex;
+    justify-content: center;
+    padding: 32px;
+  }
+  
+  .subject-form {
+    mat-card {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  .form-row {
+    margin-bottom: 16px;
+  }
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  mat-card-actions {
+    padding: 16px;
+    
+    button {
+      min-width: 120px;
+      
+      mat-spinner {
+        margin: 0 auto;
+      }
+    }
+  }

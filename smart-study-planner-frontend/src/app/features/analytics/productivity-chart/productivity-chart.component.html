@@ -1,0 +1,38 @@
+<!-- src/app/features/analytics/productivity-chart/productivity-chart.component.html -->
+<div class="chart-container" (window:resize)="onResize($event)">
+    <div *ngIf="chartData.length === 0" class="empty-chart">
+      <p>No data available</p>
+    </div>
+    
+    <div *ngIf="chartType === 'pie' && chartData.length > 0">
+      <ngx-charts-pie-chart
+        [view]="view"
+        [scheme]="colorScheme"
+        [results]="chartDataFormatted"
+        [gradient]="gradient"
+        [legend]="showLegend"
+        [legendPosition]="legendPosition"
+        [legendTitle]="legendTitle"
+        [labels]="true"
+        [doughnut]="false">
+      </ngx-charts-pie-chart>
+    </div>
+    
+    <div *ngIf="chartType === 'bar' && chartData.length > 0">
+      <ngx-charts-bar-horizontal
+        [view]="view"
+        [scheme]="colorScheme"
+        [results]="chartDataFormatted"
+        [gradient]="gradient"
+        [xAxis]="showXAxis"
+        [yAxis]="showYAxis"
+        [legend]="showLegend"
+        [showXAxisLabel]="showXAxisLabel"
+        [showYAxisLabel]="showYAxisLabel"
+        [xAxisLabel]="yAxisLabel"
+        [yAxisLabel]="xAxisLabel"
+        [legendPosition]="legendPosition"
+        [legendTitle]="legendTitle">
+      </ngx-charts-bar-horizontal>
+    </div>
+  </div>
