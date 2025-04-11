@@ -1,107 +1,42 @@
-// src/app/app.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
-import { MatSidenavModule } from '@angular/material/sidenav';
-
-import { HeaderComponent } from './shared/components/header/header.component';
-import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
-import { AuthService } from './core/auth/auth.service';
+import { AuthService } from './auth/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [
-    CommonModule, 
-    RouterOutlet,
-    MatSidenavModule,
-    HeaderComponent,
-    SidebarComponent
-  ],
+  imports: [CommonModule, RouterModule],
   template: `
-    <div class="app-container">
-      <ng-container *ngIf="isLoggedIn; else loginTemplate">
-        <app-header></app-header>
-        <mat-sidenav-container class="sidenav-container">
-          <mat-sidenav mode="side" opened class="sidenav">
-            <app-sidebar [currentPage]="currentPage"></app-sidebar>
-          </mat-sidenav>
-          <mat-sidenav-content class="sidenav-content">
-            <div class="content-wrapper">
-              <router-outlet></router-outlet>
-            </div>
-          </mat-sidenav-content>
-        </mat-sidenav-container>
-      </ng-container>
-      
-      <ng-template #loginTemplate>
-        <div class="auth-container">
-          <router-outlet></router-outlet>
-        </div>
-      </ng-template>
-    </div>
+    <nav class="navbar navbar-expand navbar-dark bg-dark px-3">
+      <a class="navbar-brand" routerLink="/dashboard">Smart Study</a>
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" routerLink="/dashboard">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/subjects">Subjects</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/tasks">Tasks</a></li>
+        <li class="nav-item"><a class="nav-link" routerLink="/progress">Progress</a></li>
+      </ul>
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item" *ngIf="!auth.isLoggedIn()">
+          <a class="nav-link" routerLink="/login">Login</a>
+        </li>
+        <li class="nav-item" *ngIf="!auth.isLoggedIn()">
+          <a class="nav-link" routerLink="/register">Register</a>
+        </li>
+        <li class="nav-item" *ngIf="auth.isLoggedIn()">
+          <button class="btn btn-outline-light btn-sm" (click)="logout()">Logout</button>
+        </li>
+      </ul>
+    </nav>
+
+    <router-outlet></router-outlet>
   `,
-  styles: [`
-    .app-container {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .sidenav-container {
-      flex: 1;
-    }
-    
-    .sidenav {
-      width: 250px;
-      background-color: #f5f5f5;
-      border-right: 1px solid #e0e0e0;
-    }
-    
-    .sidenav-content {
-      background-color: #fafafa;
-    }
-    
-    .content-wrapper {
-      padding: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .auth-container {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #f5f5f5;
-    }
-  `]
 })
-export class AppComponent implements OnInit {
-  title = 'Smart Study Planner';
-  isLoggedIn = false;
-  currentPage = '';
-  
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
-  
-  ngOnInit(): void {
-    // Check authentication status
-    this.authService.currentUser$.subscribe(user => {
-      this.isLoggedIn = !!user;
-    });
-    
-    // Track current page for UI highlighting
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(event => {
-      if (event instanceof NavigationEnd) {
-        const path = event.urlAfterRedirects.split('/')[1] || 'dashboard';
-        this.currentPage = path;
-      }
-    });
+export class AppComponent {
+  constructor(public auth: AuthService, private router: Router) {}
+
+  logout() {
+    this.auth.logout();
+    this.router.navigate(['/login']);
   }
 }

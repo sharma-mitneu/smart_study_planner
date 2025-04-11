@@ -1,0 +1,33 @@
+<div class="container mt-5">
+  <h2 *ngIf="!success">Register</h2>
+
+  <!-- Success UI -->
+  <div *ngIf="success" class="text-center p-5 bg-light border rounded shadow">
+    <h2 class="text-success mb-3">🎉 Registration Successful!</h2>
+    <p class="lead">You’ll be redirected to the login page in {{ countdown }} second{{ countdown > 1 ? 's' : '' }}.</p>
+    <div class="spinner-border text-success mt-4" role="status"></div>
+  </div>
+
+  <!-- Registration Form -->
+  <form *ngIf="!success" [formGroup]="form" (ngSubmit)="register()">
+    <div class="mb-3">
+      <label>Name</label>
+      <input type="text" class="form-control" formControlName="name" />
+    </div>
+    <div class="mb-3">
+      <label>Username</label>
+      <input type="text" class="form-control" formControlName="username" />
+    </div>
+    <div class="mb-3">
+      <label>Email</label>
+      <input type="email" class="form-control" formControlName="email" />
+    </div>
+    <div class="mb-3">
+      <label>Password</label>
+      <input type="password" class="form-control" formControlName="password" />
+    </div>
+
+    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+    <button class="btn btn-success">Register</button>
+  </form>
+</div>

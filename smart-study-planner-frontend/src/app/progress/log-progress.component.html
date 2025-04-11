@@ -1,0 +1,24 @@
+<div class="container mt-4">
+    <h2>Log Study Progress</h2>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="mb-3">
+        <label>Subject</label>
+        <select class="form-select" formControlName="subjectId">
+          <option *ngFor="let subject of subjects" [value]="subject.id">
+            {{ subject.name }}
+          </option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label>Duration (minutes)</label>
+        <input type="number" class="form-control" formControlName="durationMinutes" />
+      </div>
+      <div class="mb-3">
+        <label>Notes</label>
+        <textarea class="form-control" formControlName="notes"></textarea>
+      </div>
+      <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+      <button class="btn btn-success">Log Progress</button>
+    </form>
+  </div>
+  

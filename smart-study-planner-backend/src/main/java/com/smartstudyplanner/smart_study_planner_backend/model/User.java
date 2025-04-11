@@ -39,6 +39,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private UserRole role;
 
+    @Column(nullable = false)
+    private String name;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

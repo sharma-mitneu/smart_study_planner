@@ -82,6 +82,7 @@ public class AuthService {
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .name(request.getName())
                 .role(role)
                 .build();
 
@@ -94,6 +95,7 @@ public class AuthService {
                 .token(token)
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .name(user.getName())
                 .role(user.getRole().name())
                 .build();
     }

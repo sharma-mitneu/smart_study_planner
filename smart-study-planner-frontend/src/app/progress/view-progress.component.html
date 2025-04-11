@@ -1,0 +1,24 @@
+<div class="container mt-4">
+    <h2>Study Progress History</h2>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Subject</th>
+          <th>Duration</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let entry of entries | paginate: { itemsPerPage: 5, currentPage: page }">
+          <td>{{ entry.date | date:'mediumDate' }}</td>
+          <td>{{ entry.subject?.name }}</td>
+          <td>{{ entry.durationMinutes }} mins</td>
+          <td>{{ entry.notes }}</td>
+        </tr>
+      </tbody>
+    </table>
+  
+    <pagination-controls (pageChange)="page = $event"></pagination-controls>
+  </div>
+  
