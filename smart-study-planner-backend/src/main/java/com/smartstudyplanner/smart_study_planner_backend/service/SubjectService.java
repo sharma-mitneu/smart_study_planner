@@ -159,6 +159,23 @@ public class SubjectService {
         return mapToDTO(updatedSubject);
     }
 
+    @Transactional(readOnly = true)
+    public List<SubjectDTO> getUnenrolledSubjects() {
+        User currentUser = authService.getCurrentUser();
+
+        List<Integer> enrolledSubjectIds = subjectEnrollmentRepository
+                .findByStudentId(currentUser.getId())
+                .stream()
+                .map(enrollment -> enrollment.getSubject().getId())
+                .collect(Collectors.toList());
+
+        return subjectRepository.findAll().stream()
+                .filter(subject -> !enrolledSubjectIds.contains(subject.getId()))
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+
     /**
      * Delete a subject (Admin only)
      */

@@ -35,6 +35,13 @@ public class SubjectController {
         return ResponseEntity.status(HttpStatus.CREATED).body(subjectService.createSubject(subjectDto));
     }
 
+    @GetMapping("student/available")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<SubjectDTO>> getAvailableSubjects() {
+        return ResponseEntity.ok(subjectService.getUnenrolledSubjects());
+    }
+
+
     @PutMapping("admin/update-subject/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SubjectDTO> updateSubject(
